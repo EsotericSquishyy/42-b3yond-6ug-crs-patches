@@ -1,0 +1,246 @@
+services:
+  dev-rabbitmq:
+    image: rabbitmq:4.0
+    ports:
+      - "5672:5672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - fuzz_network
+    environment:
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=secret
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  crs-java-slicer:
+    image: ghcr.io/tbd-aixcc/crs-java-slicer:v1.2.0
+    volumes:
+      - /crs:/crs
+    env_file: .javaslice.compose.env
+    depends_on:
+      dev-redis-master:
+        condition: service_healthy
+    networks:
+      - fuzz_network
+    cap_add:
+      - SYS_ADMIN
+
+  crs-prime-fuzz-javadirected:
+    labels:
+      org.opencontainers.image.source: "https://github.com/TBD-AIxCC/crs-fuzz-prime"
+      org.opencontainers.image.description: "CRS"
+      org.opencontainers.image.licenses: "MIT"
+    image: ghcr.io/tbd-aixcc/crs-fuzz-prime/prime-fuzz:gold
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true
+    volumes:
+      - /crs:/crs
+    env_file: .compose.env
+    depends_on:
+      dev-redis-master:
+        condition: service_healthy
+      dev-rabbitmq:
+        condition: service_healthy
+    networks:
+      - fuzz_network
+    cap_add:
+      - SYS_ADMIN
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+
+  crs-prime-fuzz:
+    labels:
+      org.opencontainers.image.source: "https://github.com/TBD-AIxCC/crs-fuzz-prime"
+      org.opencontainers.image.description: "CRS"
+      org.opencontainers.image.licenses: "MIT"
+    image: ghcr.io/tbd-aixcc/crs-fuzz-prime/prime-fuzz:gold
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true
+    volumes:
+      - /crs:/crs
+    env_file: .primefuzz.compose.env
+    depends_on:
+      # it should work well even if redis is not ready
+      dev-rabbitmq:
+        condition: service_healthy
+      dind:
+        condition: service_healthy
+      dev-redis-master:
+        condition: service_healthy
+      redis-slave-1:
+        condition: service_started
+    networks:
+      - fuzz_network
+    cap_add:
+      - SYS_ADMIN
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+
+  crs-prime-sentinel:
+    labels:
+      org.opencontainers.image.source: "https://github.com/TBD-AIxCC/crs-fuzz-prime"
+      org.opencontainers.image.description: "CRS"
+      org.opencontainers.image.licenses: "MIT"
+    image: ghcr.io/tbd-aixcc/crs-fuzz-prime/prime-sentinel:gold
+    build:
+      context: .
+      dockerfile: Dockerfile.sentinel
+    env_file: .compose.env
+    depends_on:
+      dev-rabbitmq:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - fuzz_network
+  dind:
+    image: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/dind:prime
+    privileged: true
+    expose:
+      - "2375"
+      - "8000"
+    volumes:
+      - /crs:/crs
+      - /crs/volume_data:/data
+    environment:
+      - DIND_SERIVCE_NAME=dind
+      - DOCKER_TLS_CERTDIR=""
+    networks:
+      - fuzz_network
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "http://localhost:2375/_ping", "-O", "/dev/null" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  pgsql:
+    image: postgres:latest
+    # profiles: ["db_profile"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+      - ./tests/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    env_file: .compose.env
+    networks:
+      - fuzz_network
+
+  dev-redis-master:
+    image: redis:7-alpine
+    container_name: dev-redis-master
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - fuzz_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  # Redis Replica #1
+  redis-slave-1:
+    image: redis:7-alpine
+    container_name: redis-slave-1
+    depends_on:
+      - dev-redis-master
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_slave_data1:/data
+    networks:
+      - fuzz_network
+    command: ["redis-server", "--appendonly", "yes", "--replicaof", "dev-redis-master", "6379"]
+
+  # Redis Replica #2
+  redis-slave-2:
+    image: redis:7-alpine
+    container_name: redis-slave-2
+    depends_on:
+      - dev-redis-master
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_slave_data2:/data
+    networks:
+      - fuzz_network
+    command: ["redis-server", "--appendonly", "yes", "--replicaof", "dev-redis-master", "6379"]
+
+  # Sentinel #1
+  sentinel-1:
+    image: redis:7-alpine
+    container_name: sentinel-1
+    depends_on:
+      - dev-redis-master
+      - redis-slave-1
+      - redis-slave-2
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    networks:
+      - fuzz_network
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+
+  # ─────────────────────────────────────────────
+  # Sentinel #2
+  sentinel-2:
+    image: redis:7-alpine
+    container_name: sentinel-2
+    depends_on:
+      - dev-redis-master
+      - redis-slave-1
+      - redis-slave-2
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    networks:
+      - fuzz_network
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+
+  # ─────────────────────────────────────────────
+  # Sentinel #3
+  sentinel-3:
+    image: redis:7-alpine
+    container_name: sentinel-3
+    depends_on:
+      - dev-redis-master
+      - redis-slave-1
+      - redis-slave-2
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    networks:
+      - fuzz_network
+    command: ["redis-sentinel", "/etc/redis/sentinel.conf"]
+
+volumes:
+  rabbitmq_data:
+  pgsql_data:
+  redis_data:
+  redis_slave_data1:
+  redis_slave_data2:
+
+
+networks:
+  fuzz_network:
+    driver: bridge

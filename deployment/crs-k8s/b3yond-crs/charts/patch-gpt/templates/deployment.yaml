@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "patch-gpt.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "patch-gpt.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "patch-gpt.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: patch-gpt
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "patch-gpt.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: patch-gpt
+        b3yond.org/anti-affinity-group: isolated
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+                      - utilities
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: wait-for-scheduler
+          image: curlimages/curl:8.12.1
+          command: ["sh", "-c", "until [ \"$(curl -s -o /dev/null -w '%{http_code}' http://{{ .Values.global.serviceName.scheduler }}:8080/health)\" -eq 200 ]; do echo waiting for scheduler; sleep 2; done"]
+          resources:
+            requests:
+              cpu: 500m
+      containers:
+        - name: patch-gpt
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+          env:
+            - name: AIXCC_RABBITMQ_URL
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: AIXCC_DB_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: AIXCC_RABBITMQ_PATCH_QUEUE
+              value: "patch_queue"
+            - name: AIXCC_RABBITMQ_PATCH_PRIORITY
+              value: "10"
+            - name: AIXCC_RABBITMQ_FUNCTEST_QUEUE
+              value: "functest"
+            - name: OPENAI_BASE_URL
+              value: http://{{ include "crs.litellm.fullname" . }}:4000
+            - name: OPENAI_API_KEY
+              value: {{ include "crs.litellm.masterkey" .  }}
+            - name: AIXCC_OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: AIXCC_OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: AIXCC_OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+            - name: AIXCC_MODEL
+              value: {{ .Values.model }}
+            - name: AIXCC_REDIS_URL
+              value: redis://{{ include "crs.redis-master.fullname" . }}:6379
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

@@ -1,0 +1,13 @@
+# This file is an example of the .rc file. It contains the necessary credentials to update the infrastructure.
+# If you need to modify AIxCC CRS infrastructure, contact Wenxuan Shi <wenxuan.shi@northwestern.edu>.
+
+export ARM_TENANT_ID=""
+export ARM_CLIENT_ID=""
+export ARM_CLIENT_SECRET=""
+export ARM_SUBSCRIPTION_ID=""
+export TF_VAR_cloudflare_zone_id=""
+export CLOUDFLARE_API_TOKEN=""
+export TF_VAR_docker_username=""
+export TF_VAR_docker_password=""
+export TF_VAR_github_username=""
+export TF_VAR_github_token=""

@@ -1,0 +1,4 @@
+.env 
+.env.competition
+.env.dev
+.env.test

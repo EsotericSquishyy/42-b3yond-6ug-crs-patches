@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "otel-backend.fullname" . }}
+spec:
+  selector:
+    app: {{ include "otel-backend.name" . }}
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+    - name: jaeger-ui
+      port: {{ .Values.uiPort | default 16686 }}
+      targetPort: {{ .Values.uiPort | default 16686 }}

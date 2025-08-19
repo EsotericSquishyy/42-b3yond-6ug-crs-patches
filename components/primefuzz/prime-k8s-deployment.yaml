@@ -1,0 +1,73 @@
+---
+# ConfigMap for environment variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crs-prime-fuzz-config
+data:
+  RABBITMQ_HOST: "dev-rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: "user"
+  QUEUE_NAME: "general_fuzzing_queue"
+  OSS_FUZZ_PATH: "./fuzz-tooling"
+  PG_CONNECTION_STRING: "postgresql://b3yond-postgres-dev.postgres.database.azure.com:5432/b3yond-db-dev"
+  METRICS_REFRESH_INTERVAL: "60"
+  CRS_MOUNT_PATH: "/crs"
+
+---
+# Secret for sensitive data
+# az aks create --name myAKSCluster --resource-group myResourceGroup --enable-addons azure-keyvault-secrets-provider --enable-oidc-issuer --enable-workload-identity --generate-ssh-keys
+apiVersion: v1
+kind: Secret
+metadata:
+  name: crs-prime-fuzz-secrets
+type: Opaque
+data:
+  # The value is base64 encoded. You can encode it using: echo -n "secret" | base64
+  RABBITMQ_PASSWORD: "c2VjcmV0" 
+  PG_USER: "dXNlcm5hbWU="  # "username" encoded in base64
+  PG_PASSWORD: ""
+
+---
+# CRS Prime Fuzz Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crs-primefuzz
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crs-primefuzz
+  template:
+    metadata:
+      labels:
+        app: crs-primefuzz
+    spec:
+      imagePullSecrets:
+        - name: ghcr-registry 
+      containers:
+        - name: crs-primefuzz
+          image: ubuntu
+          imagePullPolicy: Always
+          command:
+            - "/bin/bash"
+            - "-c"
+            - "while true; do sleep 30; done"
+          volumeMounts:
+            - name: shared-storage
+              mountPath: /crs
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - SYS_ADMIN
+          envFrom:
+            - configMapRef:
+                name: crs-prime-fuzz-config
+            - secretRef:
+                name: crs-prime-fuzz-secrets
+      volumes:
+        - name: shared-storage
+          persistentVolumeClaim:
+            claimName: crs-share

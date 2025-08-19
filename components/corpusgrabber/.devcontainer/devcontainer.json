@@ -1,0 +1,20 @@
+{
+	"name": "CorpusGrabber",
+	"image": "mcr.microsoft.com/devcontainers/python:3.12",
+    "features": {
+        "ghcr.io/mikaello/devcontainer-features/modern-shell-utils:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.black-formatter",
+				"ms-toolsai.jupyter",
+				"llvm-vs-code-extensions.vscode-clangd",
+				"zxh404.vscode-proto3"
+			]
+		}
+	},
+	"postCreateCommand": "pip install -r requirements.txt"
+}
+

@@ -1,0 +1,8 @@
+libxml2,xml,/src/libxml2/fuzz/xml.c:28:0
+libxls,fuzz_xls,/src/libxls/fuzz/fuzz_xls.c:4:0
+lzma,7z_fuzzer,/src/lzma-fuzz/7z_fuzzer.cc:35:73
+yara,elf_fuzzer,/src/yara/tests/oss-fuzz/elf_fuzzer.cc:68:0
+openssh,sig_fuzz,/src/openssh/regress/misc/fuzz-harness/sig_fuzz.cc:26:0
+libexif,exif_loader_fuzzer,/src/exif_loader_fuzzer.cc:56:0
+arduinojson,json_fuzzer,/src/arduinojson/extras/fuzzing/json_fuzzer.cpp:3:0
+libtorrent,http_parser,/src/libtorrent/fuzzers/src/http_parser.cpp:55:0

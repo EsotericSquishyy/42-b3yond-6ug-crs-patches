@@ -1,0 +1,30 @@
+FROM docker:28.0.4-dind
+
+# Install Python and essential dependencies
+RUN apk add --no-cache \
+    curl \
+    python3 \
+    py3-pip \
+    redis
+
+WORKDIR /app
+
+COPY entrypoint-dind.sh .
+COPY dind_load_api.py .
+
+# Make the entrypoint script executable
+RUN chmod +x entrypoint-dind.sh dind_load_api.py
+
+RUN pip install --no-cache-dir --break-system-packages fastapi uvicorn
+
+LABEL org.opencontainers.image.source="https://github.com/aixcc-finals/afc-crs-42-b3yond-6ug"
+LABEL org.opencontainers.image.description="Docker image for the B3yond project, based on Docker-in-Docker (dind) with Python and Redis."
+LABEL org.opencontainers.image.licenses="MIT"
+# Set the entrypoint script
+
+# Set environment variable defaults
+ENV REDIS_HOST=dev-redis-master
+ENV REDIS_KEY=dind:hosts
+ENV BASE_RUNNER_IMAGE=ghcr.io/aixcc-finals/base-runner:v1.3.0
+
+ENTRYPOINT ["/app/entrypoint-dind.sh"]

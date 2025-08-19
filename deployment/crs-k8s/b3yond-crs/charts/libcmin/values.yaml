@@ -1,0 +1,17 @@
+image:
+  controller:
+    repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-cmin-controller
+    tag: "gold"
+  calculator:
+    repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-cmin-calculator
+    tag: "gold"
+secret: ghcr-registry
+replicaCount:
+  controller: 0
+  calculator: 1
+scale:
+  queue: cmin_queue
+  targetValue: 4
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  cooldownPeriod:  1200

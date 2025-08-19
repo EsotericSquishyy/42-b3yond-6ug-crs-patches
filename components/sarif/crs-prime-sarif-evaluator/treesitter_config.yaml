@@ -1,0 +1,30 @@
+cache:
+  enabled: true                # Enable/disable caching (default: true)
+  max_size_mb: 100             # Maximum cache size in MB (default: 100)
+  ttl_seconds: 300             # Cache entry time-to-live in seconds (default: 300)
+
+security:
+  max_file_size_mb: 5          # Maximum file size to process in MB (default: 5)
+  excluded_dirs:               # Directories to exclude from processing
+    - .git
+    - node_modules
+    - __pycache__
+  allowed_extensions:          # Optional list of allowed file extensions
+    - c
+    - cc
+    - cpp
+    - cxx
+    - h
+    - hpp
+    - java
+    # - js
+    # Leave empty or omit for all extensions
+
+language:
+  default_max_depth: 5        # Default max depth for AST traversal (default: 5)
+  preferred_languages:         # List of languages to pre-load at startup for faster performance
+    - c                   # Pre-loading reduces latency for first operations
+    - java
+
+log_level: INFO                # Logging level (DEBUG, INFO, WARNING, ERROR)
+max_results_default: 100       # Default maximum results for search operations

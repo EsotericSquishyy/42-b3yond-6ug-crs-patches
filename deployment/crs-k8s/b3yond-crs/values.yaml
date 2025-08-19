@@ -1,0 +1,130 @@
+global:
+  version: "gold"
+  openaiApiKey: "" # To be replaced by user
+  anthropicApiKey: "" # To be replaced by user
+  deepseekApiKey: "" # To be replaced by user
+  googleApiKey: "" # To be replaced by user
+  challenge:
+    max_concurrent: 8
+  resources:
+    requests:
+      cpu: 30
+    limits:
+      cpu: 30
+  otel:
+    endpoint: "" # To be replaced by user
+    headers: "" # To be replaced by user
+    protocol: "" # To be replaced by user
+  database:
+    connectionString: "" # To be replaced by user
+  rabbitmq:
+    auth:
+      username: user
+      password: secret
+  litellm:
+    baseURL: "" # To be replaced by user
+    apiKey: "" # To be replaced by user
+  pvc:
+    name: crs-share
+    prime:
+      name: prime-local
+    seed:
+      name: seed-local
+  serviceName:
+    scheduler: b3yond-scheduler # health probe 8080
+    mock: b3yond-mock # mock server 8080
+    libcmin: b3yond-libcmin # libcmin 80
+  competition:
+    url: "http://b3yond-mock:8080" # To be replaced with the actual competition URL
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+  crs:
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+
+redis:
+  useHostnames: true
+  sentinel:
+    enabled: true
+  master:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: b3yond.org/role
+              operator: In
+              values:
+              - user
+    tolerations:
+      - key: "b3yond.org/role"
+        operator: "Equal"
+        value: "user"
+        effect: "NoSchedule"
+    podAnnotations:
+      cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+    pdb:
+      minAvailable: 1
+      maxUnavailable: 0
+  replica:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: b3yond.org/role
+              operator: In
+              values:
+              - user
+    tolerations:
+      - key: "b3yond.org/role"
+        operator: "Equal"
+        value: "user"
+        effect: "NoSchedule"
+    pdb:
+      minAvailable: 1
+  auth:
+    enabled: false
+    sentinel: false
+
+rabbitmq:
+  affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: b3yond.org/role
+              operator: In
+              values:
+              - user
+  tolerations:
+    - key: "b3yond.org/role"
+      operator: "Equal"
+      value: "user"
+      effect: "NoSchedule"
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+  pdb:
+    minAvailable: 1 # at least one rabbitmq pod should be available
+  auth:
+    username: user
+    password: secret
+  extraConfiguration: |
+    consumer_timeout = 1036800000
+    channel_max = 10239
+
+tailscale-operator:
+  namespace: tailscale
+  oauth:
+    clientId: "b3yond" # to be replaced with the actual client id
+    clientSecret: "b3yond" # to be replaced with the actual client secret
+  operatorConfig:
+    defaultTags:
+      - "tag:crs-virtual-echo"
+    hostname: "virtual-echo-operator"
+  proxyConfig:
+    defaultTags: "tag:crs-virtual-echo"
+
+litellm:
+  database:
+    connectionString: "" # To be replaced by user

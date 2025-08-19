@@ -1,0 +1,29 @@
+{
+	"name": "Triage",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
+	"features": {
+		"ghcr.io/mikaello/devcontainer-features/modern-shell-utils:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers-community/features/llvm:3": {}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-azuretools.vscode-docker"
+			],
+			"settings": {
+				"python.linting.enabled": true,
+				"python.formatting.provider": "black",
+				"editor.formatOnSave": true,
+				"python.defaultInterpreterPath": "/usr/local/bin/python"
+			}
+		}
+	},
+	"postCreateCommand": "git clone https://github.com/google/clusterfuzz.git; git -C clusterfuzz checkout 40773ac07bda803aead9406bd6a83531048fa5a9; pip install -r requirements.txt",
+	"remoteUser": "root"
+}

@@ -1,0 +1,69 @@
+name: Build Dockers
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'components/cminplusplus/**'
+    pull_request:
+        branches:
+            - main
+        paths:
+            - 'components/cminplusplus/**'
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            packages: write
+
+        env: 
+            IMAGE_REPO: ghcr.io/${{ github.repository_owner }}
+        
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                submodules: true
+                fetch-depth: 0
+            
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+                registry: ghcr.io
+           
+            - name: Extract repository name
+              run: echo "REPO_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV 
+            
+            - name: Build and push Controller Docker image
+              uses: docker/build-push-action@v5
+              with:
+                context: ./components/cminplusplus
+                file: ./components/cminplusplus/Dockerfile_controller
+                push: true
+                tags: |
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-controller:latest
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-controller:gold
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-controller:${{ github.sha }}
+                cache-from: type=gha
+                cache-to: type=gha,mode=max
+            
+            - name: Build and push Calculator Docker image
+              uses: docker/build-push-action@v5
+              with:
+                context: ./components/cminplusplus
+                file: ./components/cminplusplus/Dockerfile_calculator
+                push: true
+                tags: |
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-calculator:latest
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-calculator:gold
+                    ghcr.io/${{ env.REPO_NAME }}/crs-cmin-calculator:${{ github.sha }}
+                cache-from: type=gha
+                cache-to: type=gha,mode=max

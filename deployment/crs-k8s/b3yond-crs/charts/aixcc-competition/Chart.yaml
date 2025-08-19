@@ -1,0 +1,4 @@
+apiVersion: v2
+name: aixcc-competition
+version: 1.0.0
+description: aixcc competition services (tailnet cluster egress)

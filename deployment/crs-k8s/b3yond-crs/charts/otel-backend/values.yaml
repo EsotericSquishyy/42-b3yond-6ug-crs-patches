@@ -1,0 +1,9 @@
+image:
+  repository: jaegertracing/all-in-one
+  tag: latest
+
+replicaCount: 1
+
+service:
+  port: 4317
+  uiPort: 16686

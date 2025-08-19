@@ -1,0 +1,128 @@
+version: '3'
+services:
+  crs-rabbitmq:
+    image: rabbitmq:3-management
+    hostname: crs-rabbitmq
+    container_name: crs-rabbitmq-test
+    # ports:
+    #   - "5672:5672"
+    #   - "15672:15672"
+    expose:
+      - "5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  crs-postgres:
+    image: postgres
+    hostname: crs-postgres
+    container_name: crs-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./crs-dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    # ports:
+    #   - "5432:5432"
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  crs-redis:
+    image: redis:latest
+    hostname: crs-redis
+    container_name: crs-redis-test
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
+  crs-seed-minimizer:
+    image: crs-seed-minimizer:latest
+    hostname: crs-seed-minimizer
+    container_name: crs-seed-minimizer-test
+    privileged: true
+    links:
+      - crs-postgres
+      - crs-redis
+    depends_on:
+      crs-postgres:
+        condition: service_healthy
+      crs-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: host=crs-postgres port=5432 user=postgres password=postgres database=crs-test sslmode=disable
+      REDIS_URL: redis://crs-redis
+    volumes:
+      - "./crs-storage:/crs"
+      - "./tests:/crs_sarif/tests/"
+
+  crs-slice-test:
+    image: crs-slice:latest
+    hostname: crs-slice
+    container_name: crs-slice-test
+    privileged: true
+    links:
+      - crs-rabbitmq
+      - crs-postgres
+    depends_on:
+      crs-rabbitmq:
+        condition: service_healthy
+      crs-postgres:
+        condition: service_healthy
+    environment:
+      TEST_DIR: /crs_sarif/tests
+      RABBITMQ_URL: "amqp://guest:guest@crs-rabbitmq:5672/"
+      DATABASE_URL: "postgresql://postgres:postgres@crs-postgres:5432/crs-test"
+      SLICE_TASK_QUEUE: "slice-task"
+      STORAGE_DIR: "/crs"
+    volumes:
+      - "./crs-storage:/crs"
+    tty: true
+    stdin_open: true
+
+  crs-directed-test:
+    image: crs-directed:latest
+    hostname: crs-directed
+    container_name: crs-directed-test
+    privileged: true
+    links:
+      - crs-rabbitmq
+      - crs-postgres
+      - crs-slice-test
+      - crs-redis
+      - crs-seed-minimizer
+    depends_on:
+      crs-rabbitmq:
+        condition: service_healthy
+      crs-postgres:
+        condition: service_healthy
+      crs-slice-test:
+        condition: service_started
+      crs-redis:
+        condition: service_healthy
+      crs-seed-minimizer:
+        condition: service_started
+    environment:
+      TEST_DIR: /crs_sarif/tests
+      RABBITMQ_URL: "amqp://guest:guest@crs-rabbitmq:5672/"
+      DATABASE_URL: "postgresql://postgres:postgres@crs-postgres:5432/crs-test"
+      REDIS_URL: "redis://crs-redis:6379/"
+      SLICE_TASK_QUEUE: "slice-task"
+      CRS_DIRECTED_QUEUE: "crs-directed"
+      STORAGE_DIR: "/crs"
+      MOCK_WITH_SLICE: True
+    volumes:
+      - "./crs-storage:/crs"
+    tty: true
+    stdin_open: true

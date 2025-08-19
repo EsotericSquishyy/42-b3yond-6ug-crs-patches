@@ -1,0 +1,9 @@
+apiVersion: v2
+name: b3compile
+version: 1.0.0
+description: Build the tasks with different fuzzing engine and sanitizers.
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: competition-api-1-egress
+  namespace: tailscale
+  annotations:
+    tailscale.com/tailnet-fqdn: {{ regexReplaceAll "^[^:]+://" .Values.global.competition.url "" }}
+spec:
+  externalName: placeholder
+  type: ExternalName

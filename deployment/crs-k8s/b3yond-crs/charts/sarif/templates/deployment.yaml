@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "b3yond.names.fullname" . }}
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "b3yond.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "b3yond.labels.standard" . | nindent 8 }}
+    spec:
+      tolerations: {{- include "b3yond.tolerations" . | nindent 8 }}
+      affinity:
+        nodeAffinity: {{- include "b3yond.affinities.nodes" . | nindent 10 }}
+        podAntiAffinity: {{- include "b3yond.affinities.pods.utilities" . | nindent 10 }}
+      initContainers: {{- include "b3yond.initContainers.waitForScheduler" . | nindent 8 }}
+      containers:
+        - name: sarif
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: 2
+            limits:
+              cpu: 4
+          env:
+            - name: RABBITMQ_URL
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: CRS_QUEUE
+              value: {{ .Values.sarif.queue }}
+            - name: SLICE_TASK_QUEUE
+              value: slice-task
+            - name: SARIF_TO_SLICE_QUEUE
+              value: slice-task
+            - name: CRS_DF_QUEUE
+              value: directed_fuzzing_queue
+            - name: AGENT_ROOT
+              value: /app
+            - name: STORAGE_DIR
+              value: /crs
+            - name: ANTHROPIC_API_KEY
+              value: {{ .Values.global.anthropicApiKey }}
+            - name: ANTHROPIC_MODEL
+              value: claude-3-7-sonnet-latest
+            - name: OPENAI_BASE_URL
+              value: http://{{ include "crs.litellm.fullname" . }}:4000
+            - name: OPENAI_API_KEY
+              value: {{ include "crs.litellm.masterkey" .  }}
+            - name: OPENAI_MODEL
+              value: claude-4-opus
+            - name: USE_OPENAI
+              value: 'true'
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

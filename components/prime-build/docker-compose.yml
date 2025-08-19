@@ -1,0 +1,48 @@
+services:
+  dind:
+    image: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/dind:gold
+    build:
+      context: .
+      dockerfile: Dockerfile.dind
+    container_name: dind-prime
+    privileged: true
+    environment:
+      - DIND_SERIVCE_NAME=hklocal.fuzzingbrain.com
+      - DOCKER_TLS_CERTDIR=""
+    extra_hosts:
+      - "dev-redis-master:10.170.0.3"
+    ports:
+      - "2375:2375"
+      - "8000:8000"
+    volumes:
+      - /crs/volume_data:/data
+      - /crs:/crs
+    networks:
+      - prime-network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "http://localhost:2375/_ping", "-O", "/dev/null" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  prime-builder:
+    image: ghcr.io/tbd-aixcc/prime-build/builder:round-3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true
+    depends_on:
+      - dind
+    extra_hosts:
+      - "dev-redis-master:10.170.0.3"
+    volumes:
+      - /crs/volume_data:/data
+      - /crs:/crs
+    env_file:
+      - .env
+    networks:
+      - prime-network
+
+networks:
+  prime-network:
+    driver: bridge

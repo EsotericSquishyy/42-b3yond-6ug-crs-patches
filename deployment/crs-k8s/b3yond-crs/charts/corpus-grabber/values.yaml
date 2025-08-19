@@ -1,0 +1,12 @@
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/corpusgrabber
+  tag: "gold"
+secret: ghcr-registry
+replicaCount: 0
+prefetchCount: 8
+scale:
+  queue: corpus_queue
+  targetValue: 8
+  minReplicaCount: 0
+  maxReplicaCount: 1
+  cooldownPeriod:  60

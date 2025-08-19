@@ -1,0 +1,39 @@
+FROM docker:24-dind
+
+# Install Python and essential dependencies
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    gcc \
+    python3-dev \
+    musl-dev \
+    linux-headers
+
+# Set working directory
+WORKDIR /app
+
+LABEL org.opencontainers.image.source=https://github.com/aixcc-finals/afc-crs-42-b3yond-6ug
+LABEL org.opencontainers.image.description="42-b3yond-6ug CRS Sentinel - fuzzing"
+
+# Copy requirements first for better cache usage
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+
+# Copy project files
+COPY . .
+
+# Set environment variables
+ENV RABBITMQ_HOST=host.docker.internal \
+    REDIS_HOST=host.docker.internal \
+    RABBITMQ_PORT=5672 \
+    QUEUE_NAME=general_fuzzing_queue \
+    OSS_FUZZ_PATH=/app/fuzz-tooling \
+    METRICS_REFRESH_INTERVAL=60 \
+    CRS_MOUNT_PATH=/crs \
+    DOCKER_TLS_CERTDIR="" \
+    PYTHONUNBUFFERED=1
+
+# Set the entrypoint directly to the Python script
+ENTRYPOINT ["python3", "run_sentinel.py"]

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: seedgen
+version: 1.0.5
+description: Seed generation service for BandFuzz. Use LLM to generate test inputs for fuzzing.
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

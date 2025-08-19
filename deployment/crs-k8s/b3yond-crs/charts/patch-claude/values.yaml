@@ -1,0 +1,10 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/patch-agent-generator
+  tag: "gold"
+  pullPolicy: Always
+
+secret: ghcr-registry
+
+model: "claude-4-opus" # to be replaced by user

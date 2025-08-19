@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "b3yond.names.fullname" . }}
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "b3yond.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "b3yond.labels.standard" . | nindent 8 }}
+    spec:
+      tolerations: {{- include "b3yond.tolerations" . | nindent 8 }}
+      affinity:
+        nodeAffinity: {{- include "b3yond.affinities.nodes" . | nindent 10 }}
+        podAntiAffinity: {{- include "b3yond.affinities.pods.isolated" . | nindent 10 }}
+      initContainers: {{- include "b3yond.initContainers.waitForScheduler" . | nindent 8 }}
+      containers:
+        - name: triage
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+            limits:
+              cpu: {{ .Values.global.resources.limits.cpu }}
+          env:
+            - name: QUEUE_NAME
+              value: "timeout_queue"
+            - name: RABBITMQ_HOST
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: REDIS_SENTINEL_HOSTS
+              value: "{{ include "crs.redis-headless.fullname" . }}:26379"
+            - name: REDIS_MASTER
+              value: "mymaster"
+            - name: STORAGE_DIR
+              value: /crs
+            - name: LITELLM_BASE_URL
+              value: http://{{ include "crs.litellm.fullname" . }}:4000
+            - name: LITELLM_KEY
+              value: {{ include "crs.litellm.masterkey" .  }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+            - name: PREFETCH_COUNT
+              value: '{{ .Values.prefetchCount }}'
+            - name: DEDUP_MODEL
+              value: '{{ .Values.model }}'
+            - name: DEDUP_METHOD
+              value: '{{ .Values.method }}'
+            - name: TIMEOUT_OOM_TRIAGE
+              value: '{{ .Values.timeout }}'
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

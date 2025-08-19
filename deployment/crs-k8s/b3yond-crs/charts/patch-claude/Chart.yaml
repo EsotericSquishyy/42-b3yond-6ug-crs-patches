@@ -1,0 +1,4 @@
+apiVersion: v2
+name: patch-claude
+version: 1.0.0
+description: crs-patch-claude

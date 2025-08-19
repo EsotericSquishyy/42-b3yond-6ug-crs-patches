@@ -1,0 +1,8 @@
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/scheduler
+  tag: "gold"
+secret: ghcr-registry
+replicaCount: 1
+initDbSchema:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-db
+  tag: "gold"

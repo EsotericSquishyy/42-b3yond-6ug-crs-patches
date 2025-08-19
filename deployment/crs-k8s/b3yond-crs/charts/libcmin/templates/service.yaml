@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.global.serviceName.libcmin }}
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: calculator
+spec:
+  selector: {{- include "b3yond.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: calculator
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP

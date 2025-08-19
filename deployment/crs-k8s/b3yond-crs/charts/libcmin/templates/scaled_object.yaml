@@ -1,0 +1,10 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "b3yond.names.fullname" . }}-controller
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+spec:
+  scaleTargetRef:
+    name: {{ include "b3yond.names.fullname" . }}-controller
+  {{- include "b3yond.scale.mq.setups" . | nindent 2 }}

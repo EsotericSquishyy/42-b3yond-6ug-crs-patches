@@ -1,0 +1,10 @@
+pjsip,fuzz-dns
+libxls,fuzz_xls
+lzma,7z_fuzzer
+yara,elf_fuzzer
+openssh,sig_fuzz
+libexif,exif_loader_fuzzer
+arduinojson,json_fuzzer
+libtorrent,http_parser
+file,magic_fuzzer
+lua,fuzz_lua

@@ -1,0 +1,9 @@
+FROM ghcr.io/aixcc-finals/base-runner:v1.3.0
+
+RUN pip3 install aio_pika redis
+
+COPY controller /app
+
+WORKDIR /app
+
+CMD ["python3", "app.py"]

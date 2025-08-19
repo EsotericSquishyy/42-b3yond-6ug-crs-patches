@@ -1,0 +1,9 @@
+apiVersion: v2
+name: scheduler
+version: 0.1.0
+description: Schedule tasks across CRS.
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

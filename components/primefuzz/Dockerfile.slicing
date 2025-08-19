@@ -1,0 +1,19 @@
+FROM ghcr.io/aixcc-finals/base-builder-jvm:v1.3.0
+
+# Install Python and dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    wget && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+RUN wget -q https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz -O /tmp/openjdk-17.0.2_linux-x64_bin.tar.gz && \
+    tar -xzf /tmp/openjdk-17.0.2_linux-x64_bin.tar.gz -C /tmp/ && \ 
+    cp -r /tmp/jdk-17.0.2/jmods $JAVA_HOME/ && \
+    rm /tmp/openjdk-17.0.2_linux-x64_bin.tar.gz 
+
+LABEL org.opencontainers.image.source=https://github.com/aixcc-finals/afc-crs-42-b3yond-6ug
+LABEL org.opencontainers.image.authors="42-b3yond-6ug CRS Java Team"
+LABEL org.opencontainers.image.description="AIXCC Java Builder for CRS Slicing"
+# Use entrypoint script

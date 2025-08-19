@@ -1,0 +1,243 @@
+global:
+  challenge:
+    max_concurrent: 4
+  resources:
+    requests:
+      cpu: 30
+    limits:
+      cpu: 32
+  rabbitmq:
+    auth:
+      username: user
+      password: secret
+  serviceName:
+    scheduler: b3yond-scheduler # health probe 8080
+    mock: b3yond-mock # mock server 8080
+  competition:
+    url: "http://b3yond-mock:8080" # To be replaced with the actual competition URL
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+  crs:
+    hostname: "virtual-echo" # To be replaced with the actual competition hostname
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+
+###################################
+# Settings for public helm charts #
+###################################
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  resourcesPreset: "2xlarge" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+
+redis:
+  enabled: true
+  master:
+    resourcesPreset: "2xlarge" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+  replica:
+    resourcesPreset: "xlarge" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+
+######################################
+# Settings for our local helm charts #
+######################################
+
+imagePullSecrets:
+  name: ghcr-registry
+  dockerconfigjson: "" # To be replaced by user
+
+litellm:
+  enabled: true
+  replicaCount: 1
+
+# Utility Pods
+gateway:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+scheduler:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+seedgen:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+corpusgrabber:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+libcmin:
+  enabled: true
+  secret: ghcr-registry
+  replicaCount:
+    calculator: 1
+    controller: 0
+  scale:
+    targetValue: 4
+    minReplicaCount: 0
+    maxReplicaCount: 10
+  image:
+    calculator:
+      tag: "gold"
+    controller:
+      tag: "gold"
+
+# Fuzzer Pods
+sentinel:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+primefuzz:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+bandfuzz:
+  enabled: true
+  replicaCount: 4
+  secret: ghcr-registry
+  scheduler_interval: 5m
+  scheduler_tasks_per_batch: 1
+  replica_per_task: 1
+  core_count: 28
+  image:
+    tag: "gold"
+
+b3compile:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+javadirected:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  scale:
+    targetValue: 0.5
+    minReplicaCount: 4
+    maxReplicaCount: 8
+  image:
+    tag: "gold"
+
+directed:
+  enabled: true
+  secret: ghcr-registry
+  core_count: 28
+  image:
+    tag: "gold"
+
+javaslice:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+slice:
+  enabled: true
+  secret: ghcr-registry
+  replicaCount:
+    r14: 0
+    r18: 1
+  image:
+    r14:
+      tag: "gold"
+    r18:
+      tag: "gold"
+
+triage:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  prefetchCount: 28
+  scale:
+    targetValue: 28
+    minReplicaCount: 0
+    maxReplicaCount: 12
+  image:
+    tag: "gold"
+
+triage-timeout:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  prefetchCount: 1
+  scale:
+    targetValue: 1
+    minReplicaCount: 0
+    maxReplicaCount: 1
+  image:
+    tag: "gold"
+
+# Patcher Pods
+patch-claude:
+  enabled: true
+  replicaCount: 8
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+patch-reproducer:
+  enabled: true
+  replicaCount: 4
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+patch-submitter:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+# SARIF Pod
+sarif:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  image:
+    tag: "gold"
+
+# Submitter Pod
+submitter:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  data_refresh_interval: 300
+  image:
+    tag: "gold"
+
+###########################
+# Only exists for testing #
+###########################
+
+mock:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+
+otel-backend:
+  enabled: false
+  replicaCount: 1
+  secret: ghcr-registry

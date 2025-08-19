@@ -1,0 +1,8 @@
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/b3fuzz
+  tag: "gold"
+secret: ghcr-registry
+replicaCount: 0
+scheduler_interval: 15m
+scheduler_tasks_per_batch: 1
+core_count: 28

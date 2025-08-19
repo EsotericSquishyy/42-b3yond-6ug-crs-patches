@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package SeedD;
+
+option go_package = "seedd/internal/runtime";
+
+service SeedD {
+  rpc RunSeeds(RunSeedsRequest) returns (RunSeedsResponse);
+  rpc GetMergedCoverage(GetMergedCoverageRequest) returns (RunSeedsResponse);
+  rpc GetRegionSource(GetRegionSourceRequest) returns (GetRegionSourceResponse);
+  rpc ExtractFunctionSource(ExtractFunctionSourceRequest)
+      returns (ExtractFunctionSourceResponse);
+  rpc GetCallGraph(GetCallGraphRequest) returns (GetCallGraphResponse);
+  rpc GetFunctions(GetFunctionsRequest) returns (GetFunctionsResponse);
+}
+
+message RunSeedsRequest {
+  string harness_binary = 1;
+  repeated string seeds_path = 2;
+}
+
+message GetMergedCoverageRequest {
+  string harness_binary = 1;
+}
+
+message RunSeedsResponse {
+  string coverage = 1; // coverage will be return in JSON format
+  string report = 2; // report will be return in plain text format
+}
+
+message GetRegionSourceRequest {
+  string filepath = 1; // should be absolute path
+  uint64 start_line = 2;
+  uint64 start_column = 3;
+  uint64 end_line = 4;
+  uint64 end_column = 5; // exclusive
+}
+
+message GetRegionSourceResponse {
+  string source = 1; // source code in string format
+}
+
+message ExtractFunctionSourceRequest {
+  string filepath = 1; // should be absolute path
+  oneof location {
+    uint64 line = 2; // fuzzy search, can be any line number in the function
+    string function_name = 3; // function name to search for
+  }
+}
+
+message ExtractFunctionSourceResponse {
+  string source = 1; // source code in string format
+}
+
+message GetCallGraphRequest {
+  string harness_binary = 1;
+}
+
+message GetCallGraphResponse {
+  string call_graph = 1; // call graph in JSON format
+}
+
+message GetFunctionsRequest {
+  string harness_binary = 1;
+}
+
+message GetFunctionsResponse {
+  string functions = 1; // functions in JSON format
+}

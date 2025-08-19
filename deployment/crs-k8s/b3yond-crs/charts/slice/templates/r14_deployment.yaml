@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "slice-r14.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "slice-r14.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount.r14 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "slice-r14.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: slice-r14
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "slice-r14.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: slice-r14
+        b3yond.org/anti-affinity-group: isolated
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+                      - utilities
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: wait-for-scheduler
+          image: curlimages/curl:8.12.1
+          command: ["sh", "-c", "until [ \"$(curl -s -o /dev/null -w '%{http_code}' http://{{ .Values.global.serviceName.scheduler }}:8080/health)\" -eq 200 ]; do echo waiting for scheduler; sleep 2; done"]
+          resources:
+            requests:
+              cpu: 500m
+      containers:
+        - name: slice-r14
+          image: "{{ .Values.image.r14.repository }}:{{ .Values.image.r14.tag }}"
+          imagePullPolicy: {{ .Values.image.r14.pullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+          env:
+            - name: RABBITMQ_URL
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: SLICE_TASK_QUEUE
+              value: slice-task
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+            - name: REDIS_SENTINEL_HOSTS
+              value: "{{ include "crs.redis-headless.fullname" . }}:26379"
+            - name: REDIS_MASTER
+              value: "mymaster"
+            - name: STORAGE_DIR
+              value: /crs
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

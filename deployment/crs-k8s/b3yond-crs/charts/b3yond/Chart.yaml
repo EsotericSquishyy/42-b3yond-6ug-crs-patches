@@ -1,0 +1,8 @@
+# Copyright b3yond.org. All rights reserved.
+
+apiVersion: v2
+description: A helm library chart for grouping common logic between B3yond charts. This chart is not deployable by itself.
+home: https://b3yond.org
+name: b3yond
+type: library
+version: 0.1.0

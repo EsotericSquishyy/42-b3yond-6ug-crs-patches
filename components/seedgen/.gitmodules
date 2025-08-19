@@ -1,0 +1,12 @@
+[submodule "argus"]
+	path = argus
+	url = https://github.com/whexy/Argus.git
+[submodule "oss-fuzz"]
+	path = oss-fuzz
+	url = https://github.com/google/oss-fuzz.git
+[submodule "getcov"]
+	path = getcov
+	url = https://github.com/whexy/getcov
+[submodule "bandld"]
+	path = bandld
+	url = https://github.com/whexy/bandld.git

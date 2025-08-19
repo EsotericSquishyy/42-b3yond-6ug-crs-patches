@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.global.serviceName.scheduler }}
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+spec:
+  selector: {{- include "b3yond.labels.matchLabels" . | nindent 4 }}
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP

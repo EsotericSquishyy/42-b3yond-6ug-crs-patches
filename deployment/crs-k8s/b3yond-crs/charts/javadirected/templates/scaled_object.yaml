@@ -1,0 +1,17 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: {{- include "b3yond.scale.metadata" . | nindent 2 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "javadirected.fullname" . }}
+  pollingInterval: 60       # check every 60 seconds
+  cooldownPeriod:  300       # wait 300 seconds before scaling down
+  minReplicaCount: {{ .Values.global.challenge.max_concurrent }}
+  maxReplicaCount: {{ mul .Values.global.challenge.max_concurrent 1.5 }}
+  triggers:
+  - type: metrics-api
+    metadata:
+      targetValue: "2"
+      url: "http://{{ .Release.Name }}-dind-prime-headless.{{ .Release.Namespace }}.svc.cluster.local:8000/load"
+      valueLocation: 'num_requested'
+

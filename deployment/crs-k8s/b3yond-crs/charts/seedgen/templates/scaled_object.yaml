@@ -1,0 +1,4 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata: {{- include "b3yond.scale.metadata" . | nindent 2 }}
+spec: {{- include "b3yond.scale.mq" . | nindent 2 }}

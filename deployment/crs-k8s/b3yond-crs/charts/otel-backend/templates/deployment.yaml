@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "otel-backend.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "otel-backend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "otel-backend.name" . }}
+        b3yond.org/anti-affinity-group: utilities
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: b3yond.org/anti-affinity-group
+                      operator: In
+                      values:
+                        - utilities
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}

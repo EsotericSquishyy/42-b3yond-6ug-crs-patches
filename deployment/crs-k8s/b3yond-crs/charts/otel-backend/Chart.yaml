@@ -1,0 +1,6 @@
+apiVersion: v2
+name: otel-backend
+description: Deploy Jaeger all-in-one as the OpenTelemetry backend
+type: application
+version: 0.1.0
+appVersion: "1.41.0"

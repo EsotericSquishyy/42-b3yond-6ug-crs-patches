@@ -1,0 +1,9 @@
+apiVersion: v2
+name: sarif
+version: 1.0.0
+description: crs-sarif
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

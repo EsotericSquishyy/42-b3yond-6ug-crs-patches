@@ -1,0 +1,8 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/tbd-aixcc/mock-competition-server
+  tag: "latest"
+  pullPolicy: Always
+
+secret: ghcr-registry

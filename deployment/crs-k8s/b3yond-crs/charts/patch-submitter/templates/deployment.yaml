@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "patch-submitter.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "patch-submitter.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "patch-submitter.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: patch-submitter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "patch-submitter.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: patch-submitter
+        b3yond.org/anti-affinity-group: isolated
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+                      - utilities
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: wait-for-scheduler
+          image: curlimages/curl:8.12.1
+          command: ["sh", "-c", "until [ \"$(curl -s -o /dev/null -w '%{http_code}' http://{{ .Values.global.serviceName.scheduler }}:8080/health)\" -eq 200 ]; do echo waiting for scheduler; sleep 2; done"]
+          resources:
+            requests:
+              cpu: 500m
+      containers:
+        - name: patch-submitter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ div .Values.global.resources.requests.cpu 2 }}
+            limits:
+              cpu: {{ .Values.global.resources.limits.cpu }}
+          env:
+            - name: AIXCC_DB_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

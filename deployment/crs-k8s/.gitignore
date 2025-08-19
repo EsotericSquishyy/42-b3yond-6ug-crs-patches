@@ -1,0 +1,38 @@
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Helm-specific
+*.tgz
+.helm/
+Chart.lock
+
+# Kubernetes generated files
+kubeconfig
+*.kubeconfig
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Dependencies
+node_modules/
+vendor/
+
+# Secrets
+secret-*.yaml
+
+*dev-template.yaml

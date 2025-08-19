@@ -1,0 +1,256 @@
+global:
+  challenge:
+    max_concurrent: 2
+  resources:
+    requests:
+      cpu: 7
+    limits:
+      cpu: 8
+  rabbitmq:
+    auth:
+      username: user
+      password: secret
+  serviceName:
+    scheduler: b3yond-scheduler # health probe 8080
+    mock: b3yond-mock # mock server 8080
+  competition:
+    url: "http://b3yond-mock:8080" # To be replaced with the actual competition URL
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+  crs:
+    hostname: "virtual-echo" # To be replaced with the actual competition hostname
+    apiUser: "b3yond" # To be replaced with the actual competition api user
+    apiKey: "b3yond" # To be replaced with the actual competition api key
+
+###################################
+# Settings for public helm charts #
+###################################
+
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  resourcesPreset: "small" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+
+redis:
+  enabled: true
+  master:
+    resourcesPreset: "small" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+  replica:
+    resourcesPreset: "small" # none, nano, micro, small, medium, large, xlarge, 2xlarge
+
+######################################
+# Settings for our local helm charts #
+######################################
+
+imagePullSecrets:
+  name: ghcr-registry
+  dockerconfigjson: "" # To be replaced by user
+
+litellm:
+  enabled: true
+  replicaCount: 1
+
+# Control Plane
+gateway:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+scheduler:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+# Seedgen
+seedgen:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  prefetchCount: 1
+  scale:
+    targetValue: 1
+    minReplicaCount: 0
+    maxReplicaCount: 2
+  image:
+    tag: "mcp"
+
+corpusgrabber:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  prefetchCount: 2
+  scale:
+    targetValue: 1
+    minReplicaCount: 0
+    maxReplicaCount: 2
+  image:
+    tag: "latest"
+
+libcmin:
+  enabled: true
+  secret: ghcr-registry
+  replicaCount:
+    calculator: 1
+    controller: 0
+  scale:
+    targetValue: 2
+    minReplicaCount: 0
+    maxReplicaCount: 2
+  image:
+    calculator:
+      tag: "latest"
+    controller:
+      tag: "latest"
+
+# Fuzzer Pods
+sentinel:
+  enabled: false
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+primefuzz:
+  enabled: true
+  replicaCount: 2
+  secret: ghcr-registry
+  image:
+    tag: "v1.0.9"
+
+bandfuzz:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  scheduler_interval: 15m
+  scheduler_tasks_per_batch: 1
+  replica_per_task: 1
+  core_count: 6
+  image:
+    tag: "latest"
+
+b3compile:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  scale:
+    targetValue: 1
+    minReplicaCount: 0
+    maxReplicaCount: 2
+    cooldownPeriod:  1200
+  image:
+    tag: "latest"
+
+javadirected:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "v1.0.9"
+
+directed:
+  enabled: true
+  replicaCount: 2
+  secret: ghcr-registry
+  core_count: 6
+  image:
+    tag: "latest"
+
+javaslice:
+  enabled: true # TODO: disabled for testing purposes
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "v1.2.0"
+
+slice:
+  enabled: true
+  secret: ghcr-registry
+  replicaCount:
+    r14: 0
+    r18: 1
+  image:
+    r14:
+      tag: "latest"
+    r18:
+      tag: "latest"
+
+triage:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  prefetchCount: 6
+  scale:
+    targetValue: 6
+    minReplicaCount: 0
+    maxReplicaCount: 2
+  image:
+    tag: "latest"
+
+triage-timeout:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  prefetchCount: 1
+  scale:
+    targetValue: 1
+    minReplicaCount: 0
+    maxReplicaCount: 1
+  image:
+    tag: "latest"
+
+# Patcher Pods
+patch-claude:
+  enabled: true
+  replicaCount: 2
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+patch-reproducer:
+  enabled: true
+  replicaCount: 2
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+patch-submitter:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+# SARIF Pod
+sarif:
+  enabled: true
+  replicaCount: 0
+  secret: ghcr-registry
+  image:
+    tag: "latest"
+
+# Submitter Pod
+submitter:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+  data_refresh_interval: 120
+  image:
+    tag: "latest"
+
+###########################
+# Only exists for testing #
+###########################
+
+mock:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry
+
+otel-backend:
+  enabled: true
+  replicaCount: 1
+  secret: ghcr-registry

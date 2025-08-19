@@ -1,0 +1,125 @@
+apiVersion: v2
+name: b3yond-crs
+description: AI Cybersecurity Reasoning System - B3yond.org
+version: 0.1.0
+appVersion: "1.16.0"
+
+dependencies:
+  # Important competition dependencies
+  - name: aixcc-competition
+    version: 1.0.0
+    repository: "file://./charts/aixcc-competition"
+  - name: litellm
+    version: 0.1.0
+    repository: "file://./charts/litellm"
+    condition: litellm.enabled
+  - name: rabbitmq
+    version: 15.2.3
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: rabbitmq.enabled
+  - name: redis
+    version: 18.6.1
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+
+  # Interfaces: Gateway & Scheduler & SUbmitter
+  - name: scheduler
+    version: 0.1.0
+    repository: "file://./charts/scheduler"
+    condition: scheduler.enabled
+  - name: gateway
+    version: 0.1.0
+    repository: "file://./charts/gateway"
+    condition: gateway.enabled
+  - name: submitter
+    version: 1.0.0
+    repository: "file://./charts/submitter"
+    condition: submitter.enabled
+
+  # Pre Fuzzing: seed generation & corpus build
+  - name: seedgen
+    version: 1.0.5
+    repository: "file://./charts/seedgen"
+    condition: seedgen.enabled
+  - name: corpusgrabber
+    version: 1.0.0
+    repository: "file://./charts/corpus-grabber"
+    condition: corpusgrabber.enabled
+
+  # Prime Fuzzing
+  - name: primefuzz
+    version: 1.0.8
+    repository: "file://./charts/primefuzz"
+    condition: primefuzz.enabled
+  - name: sentinel
+    version: 1.0.5
+    repository: "file://./charts/sentinel"
+    condition: sentinel.enabled
+  - name: dind-prime
+    version: 1.0.0
+    repository: "file://./charts/dind-prime"
+    condition: dind-prime.enabled
+  - name: javadirected
+    version: 1.0.8
+    repository: "file://./charts/javadirected"
+    condition: javadirected.enabled
+  - name: javaslice
+    version: 1.1.0
+    repository: "file://./charts/javaslice"
+    condition: javaslice.enabled
+
+  # Directed Fuzzing
+  - name: directed
+    version: 0.1.0
+    repository: "file://./charts/directed"
+    condition: directed.enabled
+  - name: slice
+    version: 0.2.0
+    repository: "file://./charts/slice"
+    condition: slice.enabled
+
+  # BandFuzz
+  - name: b3compile
+    version: 1.0.0
+    repository: "file://./charts/b3compile"
+    condition: b3compile.enabled
+  - name: bandfuzz
+    version: 1.0.0
+    repository: "file://./charts/bandfuzz"
+    condition: bandfuzz.enabled
+
+  # Post Fuzzing: cmin & triage
+  - name: libcmin
+    version: 1.0.0
+    repository: "file://./charts/libcmin"
+    condition: libcmin.enabled
+  - name: triage
+    version: 1.0.0
+    repository: "file://./charts/triage"
+    condition: triage.enabled
+
+  # Patch
+  - name: patch-claude
+    version: 1.0.0
+    repository: "file://./charts/patch-claude"
+    condition: patch-claude.enabled
+  - name: patch-gpt
+    version: 1.0.0
+    repository: "file://./charts/patch-gpt"
+    condition: patch-gpt.enabled
+
+  # SARIF
+  - name: sarif
+    version: 1.0.0
+    repository: "file://./charts/sarif"
+    condition: sarif.enabled
+
+  # Competition Service Mocks (test only, disabled during compeition)
+  - name: otel-backend
+    version: 0.1.0
+    repository: "file://./charts/otel-backend"
+    condition: otel-backend.enabled
+  - name: mock
+    version: 1.0.0
+    repository: "file://./charts/mock"
+    condition: mock.enabled

@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dind-prime.fullname" . }}-headless
+  labels:
+    app.kubernetes.io/name: {{ include "dind-prime.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    role: dind-prime
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: {{ include "dind-prime.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    role: dind-prime
+  ports:
+    - name: dind
+      protocol: TCP
+      port: 2375
+      targetPort: 2375
+    - name: dindstatus
+      #   curl http://${SERVICE_NAME}:8000/load return a JSON:
+      #  {  "num_requested": 1, "logical_cpus": 4, "load_container": 234.5, "load_sys": 123.4 }
+      # e.g. docker CPU usage in percentage: 234.5 
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+

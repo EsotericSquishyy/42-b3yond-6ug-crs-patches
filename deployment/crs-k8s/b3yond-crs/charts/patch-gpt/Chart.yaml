@@ -1,0 +1,4 @@
+apiVersion: v2
+name: patch-gpt
+version: 1.0.0
+description: crs-patch-gpt

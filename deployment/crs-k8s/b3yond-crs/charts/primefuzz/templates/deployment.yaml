@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "primefuzz.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "primefuzz.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "primefuzz.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: primefuzz
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "primefuzz.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: primefuzz
+        b3yond.org/anti-affinity-group: isolated
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+                      - utilities
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: primefuzz
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests:
+              cpu: {{ min .Values.global.resources.requests.cpu 8 }}
+              memory: 16Gi
+            limits:
+              cpu: {{ max .Values.global.resources.limits.cpu 16 }}
+          env:
+            - name: RABBITMQ_HOST
+              value: '{{ include "crs.rabbitmq.fullname" . }}'
+            - name: RABBITMQ_USER
+              value: '{{ .Values.global.rabbitmq.auth.username }}'
+            - name: RABBITMQ_PASSWORD
+              value: '{{ .Values.global.rabbitmq.auth.password }}'
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: QUEUE_NAME
+              value: "prime_fuzzing_queue"
+            - name: DIRECT_QUEUE_NAME
+              value: "java_directed_fuzzing_queue"
+            - name: OSS_FUZZ_PATH
+              value: "/data/fuzz-tools"
+            - name: REDIS_HOST
+              value: '{{ include "crs.redis-master.fullname" . }}'
+            - name: REDIS_SENTINEL_HOSTS
+              value: '{{ include "crs.redis-headless.fullname" . }}:26379'
+            - name: REDIS_MASTER
+              value: "mymaster"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+            - name: MAX_LOAD
+              value: "2440"
+            - name: JOB_DATA_KEY_PREFIX
+              value: "prime:job_data"
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+            - name: crs-prime-volume
+              mountPath: /data
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+        - name: crs-prime-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.prime.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}
+      initContainers:
+        - name: wait-for-scheduler
+          image: curlimages/curl:8.12.1
+          command: ["sh", "-c", "until [ \"$(curl -s -o /dev/null -w '%{http_code}' http://{{ .Values.global.serviceName.scheduler }}:8080/health)\" -eq 200 ]; do echo waiting for scheduler; sleep 2; done"]
+          resources:
+            requests:
+              cpu: 500m

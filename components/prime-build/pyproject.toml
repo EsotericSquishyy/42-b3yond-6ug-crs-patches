@@ -1,0 +1,31 @@
+[project]
+name = "prime-builder"
+version = "0.1.0"
+description = "OSS-Fuzz project builder using RQ job queue"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "rq",
+    "redis",
+    "python-dotenv",
+    "loguru",
+    "docker",
+    "typer",
+    "pyyaml>=6.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.1.2",
+    "isort>=6.0.1",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.5",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["primebuilder"]

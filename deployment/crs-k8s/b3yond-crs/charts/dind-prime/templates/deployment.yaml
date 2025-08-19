@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "dind-prime.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "dind-prime.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  serviceName: {{ include "dind-prime.fullname" . }}-headless
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dind-prime.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: dind-prime
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dind-prime.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: dind-prime
+        b3yond.org/anti-affinity-group: isolated
+    spec:
+      subdomain: {{ include "dind-prime.fullname" . }}-headless
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+                      - utilities
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: dind-prime
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+            limits:
+              cpu: {{ .Values.global.resources.limits.cpu }}
+          ports:
+            - containerPort: 2375
+              protocol: TCP
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+            - name: REDIS_HOST
+              value: '{{ include "crs.redis-master.fullname" . }}'
+            - name: REDIS_KEY
+              value: "dind:hosts"
+            - name: REDIS_SENTINEL_HOSTS
+              value: '{{ include "crs.redis-headless.fullname" . }}:26379'
+            - name: REDIS_MASTER
+              value: "mymaster"
+            - name: BASE_RUNNER_IMAGE
+              value: "{{ .Values.aixccimage.repository }}:{{ .Values.aixccimage.tag }}"
+            - name: NAMESPACE
+              value: "{{ .Release.Namespace }}"
+            - name: HEADLESS_SVC_NAME
+              value: "{{ include "dind-prime.fullname" . }}-headless"
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+            - name: crs-prime-volume
+              mountPath: /data
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+        - name: crs-prime-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.prime.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}
+      initContainers:
+        # TODO: health check : ["wget", "-q", "http://dind-prime:2375/_ping", "-O", "/dev/null" ]
+        - name: wait-for-scheduler
+          image: curlimages/curl:8.12.1
+          command: ["sh", "-c", "until [ \"$(curl -s -o /dev/null -w '%{http_code}' http://{{ .Values.global.serviceName.scheduler }}:8080/health)\" -eq 200 ]; do echo waiting for scheduler; sleep 2; done"]
+          resources:
+            requests:
+              cpu: 500m

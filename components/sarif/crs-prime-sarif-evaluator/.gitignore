@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+logs/
+data_shared/example/source/
+*.egg-info
+
+# Virtual environments
+.venv
+mcp_agent.secrets.yaml
+crs/volume_data
+crs/crs/
+.env

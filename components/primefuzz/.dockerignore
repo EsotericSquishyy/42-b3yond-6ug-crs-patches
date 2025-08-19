@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+.env
+.compose.env
+.*.env
+.git
+.github
+.gitignore
+.pytest_cache
+venv
+.venv
+*.log
+examples
+2b8cb6fc-f3a8-4d15-aaf3-403238a456ea/
+[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/

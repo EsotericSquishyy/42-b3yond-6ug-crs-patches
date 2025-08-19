@@ -1,0 +1,11 @@
+# pycache and all the pycache in subdirs
+src/__pycache__
+src/utils/__pycache__
+src/checkers/__pycache__
+src/models/__pycache__
+# build dir
+build
+# env
+.env
+
+src/test_aixcc.py

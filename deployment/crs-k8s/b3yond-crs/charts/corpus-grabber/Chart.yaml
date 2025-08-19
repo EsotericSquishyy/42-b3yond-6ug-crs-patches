@@ -1,0 +1,9 @@
+apiVersion: v2
+name: corpusgrabber
+version: 1.0.0
+description: crs-corpusgrabber
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

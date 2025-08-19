@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "slice-r14.fullname" . }}-scaledobject
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ include "slice-r14.fullname" . }}
+  pollingInterval: 60       # check every 60 seconds
+  cooldownPeriod:  1200     # wait 20 minutes before scaling down
+  minReplicaCount: 1
+  maxReplicaCount: {{ .Values.global.challenge.max_concurrent }}
+  triggers:
+  - type: metrics-api
+    metadata:
+      targetValue: "1"
+      url: "http://{{ .Values.global.serviceName.scheduler }}.{{ .Release.Namespace }}.svc.cluster.local:8080/queue?queue=slice-task"
+      valueLocation: 'length'

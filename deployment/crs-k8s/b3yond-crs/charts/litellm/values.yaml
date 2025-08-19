@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/berriai/litellm # Public Image
+  tag: "main-latest"
+  pullPolicy: Always
+
+secret: ghcr-registry
+
+database:
+  connectionString: postgresql://postgres:postgres@postgres-service:5432/postgres # to be replaced by the user

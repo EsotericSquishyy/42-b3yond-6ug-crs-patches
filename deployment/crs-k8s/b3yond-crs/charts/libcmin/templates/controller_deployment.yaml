@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "b3yond.names.fullname" . }}-controller
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+spec:
+  replicas: {{ .Values.replicaCount.controller }}
+  selector:
+    matchLabels: {{- include "b3yond.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: controller
+  template:
+    metadata:
+      labels: {{- include "b3yond.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: controller
+    spec:
+      tolerations: {{- include "b3yond.tolerations" . | nindent 8 }}
+      affinity:
+        nodeAffinity: {{- include "b3yond.affinities.nodes" . | nindent 10 }}
+        podAntiAffinity: {{- include "b3yond.affinities.pods.isolated" . | nindent 10 }}
+      initContainers: {{- include "b3yond.initContainers.waitForScheduler" . | nindent 8 }}
+      containers:
+        - name: libcmin-controller
+          image: "{{ .Values.image.controller.repository }}:{{ .Values.image.controller.tag }}"
+          imagePullPolicy: Always
+      containers:
+        - name: libcmin-controller
+          image: "{{ .Values.image.controller.repository }}:{{ .Values.image.controller.tag }}"
+          imagePullPolicy: {{ .Values.image.controller.pullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+          env:
+            - name: CMIN_QUEUE
+              value: "cmin_queue"
+            - name: RABBITMQ_URL
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: REDIS_SENTINEL_HOSTS
+              value: "{{ include "crs.redis-headless.fullname" . }}:26379"
+            - name: REDIS_MASTER_NAME
+              value: "mymaster"
+            - name: SEED_STORAGE_PREFIX
+              value: "/seeds"
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+            - name: seed-local
+              mountPath: /seeds
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+        - name: seed-local
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.seed.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

@@ -1,0 +1,14 @@
+antiAffinityGroup: "utilities"
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-sarif
+  tag: "gold"
+secret: ghcr-registry
+replicaCount: 0
+sarif:
+  queue: "sarif_queue"
+scale:
+  queue: sarif_queue
+  targetValue: 1
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  cooldownPeriod:  43200

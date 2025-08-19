@@ -1,0 +1,91 @@
+{
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "CodeScan++",
+                    "rules": [
+                        {
+                            "id": "CWE-121",
+                            "helpUri": "https://example.com/help/png_handle_iCCP",
+                            "properties": {},
+                            "fullDescription": {
+                                "text": "vulnerable to #CWE-121"
+                            },
+                            "shortDescription": {
+                                "text": "CWE #CWE-121"
+                            },
+                            "defaultConfiguration": {
+                                "level": "warning"
+                            }
+                        }
+                    ],
+                    "version": "1.0.0"
+                }
+            },
+            "results": [
+                {
+                    "rule": {
+                        "id": "CWE-121",
+                        "index": 0
+                    },
+                    "level": "error",
+                    "ruleId": "CWE-121",
+                    "message": {
+                        "text": "Associated risk: CWE-121"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "endLine": 1447,
+                                    "startLine": 1421,
+                                    "startColumn": 1
+                                },
+                                "artifactLocation": {
+                                    "uri": "src/ui/user_input.c",
+                                    "index": 0
+                                }
+                            }
+                        }
+                    ],
+                    "properties": {
+                        "github/alertUrl": "https://api.github.com/repos/aixcc-afc/round-precomp-libpng/code-scanning/alerts/1",
+                        "github/alertNumber": 1
+                    },
+                    "correlationGuid": "1d107c7a-f0fe-4636-bb29-93cf0f714632",
+                    "partialFingerprints": {
+                        "primaryLocationLineHash": "ea6cc276e0846def:3"
+                    }
+                }
+            ],
+            "artifacts": [
+                {
+                    "location": {
+                        "uri": "src/ui/user_input.c",
+                        "index": 0
+                    }
+                }
+            ],
+            "conversion": {
+                "tool": {
+                    "driver": {
+                        "name": "GitHub Code Scanning"
+                    }
+                }
+            },
+            "automationDetails": {
+                "id": "/"
+            },
+            "versionControlProvenance": [
+                {
+                    "branch": "refs/heads/challenges/full-scan",
+                    "revisionId": "0fae79bd451de3dbbce3e317573f43be30125dff",
+                    "repositoryUri": "https://github.com/aixcc-afc/round-precomp-libpng"
+                }
+            ]
+        }
+    ],
+    "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/refs/heads/main/sarif-2.1/prose/sarif-schema-2.1.0.json",
+    "version": "2.1.0"
+}

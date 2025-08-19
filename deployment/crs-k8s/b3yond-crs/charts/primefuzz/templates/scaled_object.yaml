@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "primefuzz.fullname" . }}-scaledobject
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ include "primefuzz.fullname" . }}
+  pollingInterval: 60       # check every 60 seconds
+  cooldownPeriod:  300       # wait 300 seconds before scaling down
+  minReplicaCount: {{ .Values.global.challenge.max_concurrent }}
+  maxReplicaCount: {{ mul .Values.global.challenge.max_concurrent 2 }}
+  triggers:
+  - type: metrics-api
+    metadata:
+      targetValue: "1"
+      url: "http://{{ .Release.Name }}-dind-prime-headless.{{ .Release.Namespace }}.svc.cluster.local:8000/load"
+      valueLocation: 'num_requested'

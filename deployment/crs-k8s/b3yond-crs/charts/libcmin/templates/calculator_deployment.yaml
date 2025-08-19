@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "b3yond.names.fullname" . }}-calculator
+  labels: {{- include "b3yond.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: calculator
+spec:
+  replicas: {{ .Values.replicaCount.calculator }}
+  selector:
+    matchLabels: {{- include "b3yond.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: calculator
+  template:
+    metadata:
+      labels: {{- include "b3yond.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: calculator
+    spec:
+      tolerations: {{- include "b3yond.tolerations" . | nindent 8 }}
+      affinity:
+        nodeAffinity: {{- include "b3yond.affinities.nodes" . | nindent 10 }}
+        podAntiAffinity: {{- include "b3yond.affinities.pods.isolated" . | nindent 10 }}
+      initContainers: {{- include "b3yond.initContainers.waitForScheduler" . | nindent 8 }}
+      containers:
+        - name: libcmin-calculator
+          image: "{{ .Values.image.calculator.repository }}:{{ .Values.image.calculator.tag }}"
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+          resources:
+            requests:
+              cpu: {{ .Values.global.resources.requests.cpu }}
+          env:
+            - name: REDIS_SENTINEL_HOSTS
+              value: "{{ include "crs.redis-headless.fullname" . }}:26379"
+            - name: REDIS_MASTER_NAME
+              value: "mymaster"
+            - name: SHARED_STORAGE_PREFIX
+              value: "/crs"
+            - name: SEED_STORAGE_PREFIX
+              value: "/seeds"
+            - name: CACHE_TIMEOUT
+              value: "300"
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+            - name: seed-local
+              mountPath: /seeds
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+        - name: seed-local
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.seed.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

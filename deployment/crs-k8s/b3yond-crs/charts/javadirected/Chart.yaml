@@ -1,0 +1,5 @@
+apiVersion: v2
+name: javadirected
+description: A Helm chart for Java Directed Fuzz (primefuzz fork)
+version: 1.0.8
+appVersion: "1.0.8"

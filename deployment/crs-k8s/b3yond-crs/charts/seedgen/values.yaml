@@ -1,0 +1,17 @@
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/seedgen
+  tag: "gold"
+secret: ghcr-registry
+replicaCount: 0
+prefetchCount: 1
+models:
+  info: "gpt-4.1"
+  coding: "claude-4-sonnet"
+  reasoning: "o4-mini"
+  list: "o4-mini,claude-4-sonnet"
+scale:
+  queue: seedgen_queue
+  targetValue: 1
+  minReplicaCount: 0
+  maxReplicaCount: 8
+  cooldownPeriod:  1800

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: bandfuzz
+version: 1.0.0
+description: Run BandFuzz with fuzzlets, a distributed fuzzing framework.
+
+dependencies:
+  - name: b3yond
+    version: 0.1.0
+    repository: "file://../b3yond"

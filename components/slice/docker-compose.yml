@@ -1,0 +1,54 @@
+version: '3'
+services:
+  crs-rabbitmq:
+    image: rabbitmq:3-management
+    hostname: crs-rabbitmq
+    container_name: crs-rabbitmq-test
+    # ports:
+    #   - "5672:5672"
+    #   - "15672:15672"
+    expose:
+      - "5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  crs-postgres:
+    image: postgres
+    hostname: crs-postgres
+    container_name: crs-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./crs-dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    # ports:
+    #   - "5432:5432"
+    expose:
+      - "5432"
+
+  crs-slice-test:
+    image: crs-slice:v0.2.1
+    hostname: crs-slice
+    container_name: crs-slice-test
+    privileged: true
+    links:
+      - crs-rabbitmq
+      - crs-postgres
+    depends_on:
+      crs-rabbitmq:
+        condition: service_healthy
+      crs-postgres:
+        condition: service_started
+    environment:
+      TEST_DIR: /crs_sarif/tests
+      RABBITMQ_URL: "amqp://guest:guest@crs-rabbitmq:5672/"
+      DATABASE_URL: "postgresql://postgres:postgres@crs-postgres:5432/crs-test"
+      SLICE_TASK_QUEUE: "slice-task"
+      STORAGE_DIR: "/crs-storage"
+    volumes:
+      - "./crs-storage:/crs-storage"
+    tty: true
+    stdin_open: true

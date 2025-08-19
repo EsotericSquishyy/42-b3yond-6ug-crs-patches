@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "dind-prime.fullname" . }}-scaledobject
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    kind: StatefulSet
+    name: {{ include "dind-prime.fullname" . }}
+  pollingInterval: 120       # check every 120 seconds
+  cooldownPeriod:  21600      # wait 6 hours before scaling down
+  minReplicaCount: 1
+  maxReplicaCount: 16
+  triggers:
+    - type: metrics-api
+      metadata:
+        targetValue: "1"
+        url: "http://{{ include "dind-prime.fullname" . }}-headless.{{ .Release.Namespace }}.svc.cluster.local:8000/load"
+        valueLocation: 'num_requested'

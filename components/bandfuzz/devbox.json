@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+  "packages": [
+    "llvm_18@latest",
+    "clang_18@latest",
+    "go@latest",
+    "redis@latest",
+    "aflplusplus@latest",
+  ],
+  "shell": {
+    "init_hook": [
+      "export PS1='📦 devbox> '",
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1",
+      ],
+    },
+  },
+}

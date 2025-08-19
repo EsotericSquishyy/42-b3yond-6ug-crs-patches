@@ -1,0 +1,65 @@
+name: Build and Push Prime Sentinel to GHCR
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'components/primefuzz/**'
+  release:
+    types:
+      - created
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract repository name
+        run: echo "REPO_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build and push prime sentinel Docker image
+        if: ${{ github.event_name != 'release' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./components/primefuzz
+          file: ./components/primefuzz/Dockerfile.sentinel
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_NAME }}/prime-sentinel:${{ github.sha }}
+            ghcr.io/${{ env.REPO_NAME }}/prime-sentinel:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push prime fuzz Docker image
+        if: ${{ github.event_name != 'release' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./components/primefuzz
+          file: ./components/primefuzz/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_NAME }}/prime-fuzz:${{ github.sha }}
+            ghcr.io/${{ env.REPO_NAME }}/prime-fuzz:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

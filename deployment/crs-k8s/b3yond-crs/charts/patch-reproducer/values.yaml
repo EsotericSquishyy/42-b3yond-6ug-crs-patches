@@ -1,0 +1,8 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/patch-agent-reproducer
+  tag: "gold"
+  pullPolicy: Always
+
+secret: ghcr-registry

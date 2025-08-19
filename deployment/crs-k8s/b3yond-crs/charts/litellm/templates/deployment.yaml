@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "litellm.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "litellm.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "litellm.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      role: litellm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "litellm.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        role: litellm
+        b3yond.org/anti-affinity-group: utilities
+    spec:
+      tolerations:
+        - key: "b3yond.org/role"
+          operator: "Equal"
+          value: "user"
+          effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: b3yond.org/role
+                operator: In
+                values:
+                - user
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: b3yond.org/anti-affinity-group
+                    operator: In
+                    values:
+                      - isolated
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: b3yond.org/anti-affinity-group
+                      operator: In
+                      values:
+                        - utilities
+                topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nc -z -w1 $(echo {{ .Values.database.connectionString }} | sed -E "s/.*@([^:]+):([0-9]+).*/\1 \2/"); do echo waiting for database; sleep 2; done;']
+      containers:
+        - name: litellm
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.database.connectionString }}
+            - name: CONFIG_FILE_PATH
+              value: /app/proxy_server_config.yaml
+            - name: OTEL_EXPORTER
+              value: "otlp_{{ .Values.global.otel.protocol }}"
+            - name: OTEL_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /app/proxy_server_config.yaml
+              subPath: config.yaml
+          envFrom:
+            - secretRef:
+                name: litellm-secrets
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: {{ include "litellm.fullname" . }}-config
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

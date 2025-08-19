@@ -1,0 +1,12 @@
+# Ignore the binary
+/bin
+
+# Ignore the vendor directory
+/vendor
+
+# Ignore the git directory
+.git
+
+# Ignore local configuration files
+*.env
+*.local

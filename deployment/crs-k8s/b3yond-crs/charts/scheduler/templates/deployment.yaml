@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {{- include "b3yond.metadata" . | nindent 2 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "b3yond.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata: {{- include "b3yond.template.metadata" . | nindent 6 }}
+    spec:
+      tolerations: {{- include "b3yond.tolerations" . | nindent 8 }}
+      affinity:
+        nodeAffinity: {{- include "b3yond.affinities.nodes" . | nindent 10 }}
+        podAntiAffinity: {{- include "b3yond.affinities.pods.isolated" . | nindent 10 }}
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.28
+          command: ['sh', '-c', 'until nc -z -w1 $(echo {{ .Values.global.database.connectionString }} | sed -E "s/.*@([^:]+):([0-9]+).*/\1 \2/"); do echo waiting for database; sleep 2; done;']
+          resources:
+            requests:
+              cpu: 500m
+        - name: init-db-schema
+          image: "{{ .Values.initDbSchema.repository }}:{{ .Values.initDbSchema.tag }}"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 500m
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+        - name: wait-for-rabbitmq
+          image: curlimages/curl:8.5.0
+          command: ['sh', '-c', 'until curl -s -f "http://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:15672/api/aliveness-test/%2F" > /dev/null; do echo waiting for rabbitmq; sleep 2; done;']
+          resources:
+            requests:
+              cpu: 500m
+        - name: wait-for-redis-sentinel
+          image: bitnami/redis:7.0.15  # includes redis-cli
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Redis Sentinel to elect master..."
+              while true; do
+                output="$(redis-cli -h {{ include "crs.redis-headless.fullname" . }} -p 26379 SENTINEL get-master-addr-by-name mymaster 2>/dev/null)"
+                if [ "$(echo "$output" | wc -l)" -eq 2 ]; then
+                  echo "Sentinel is ready with elected master."
+                  break
+                fi
+                echo "Sentinel not ready yet..."
+                sleep 2
+              done
+          resources:
+            requests:
+              cpu: 500m
+      containers:
+        - name: scheduler
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 2
+          env:
+            - name: RABBITMQ_URL
+              value: 'amqp://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:5672/'
+            - name: RABBITMQ_MANAGEMENT_ENDPOINT
+              value: 'http://{{ .Values.global.rabbitmq.auth.username }}:{{ .Values.global.rabbitmq.auth.password }}@{{ include "crs.rabbitmq.fullname" . }}:15672'
+            - name: REDIS_SENTINEL_HOSTS
+              value: "{{ include "crs.redis-headless.fullname" . }}:26379"
+            - name: REDIS_MASTER
+              value: "mymaster"
+            - name: DATABASE_URL
+              value: {{ .Values.global.database.connectionString }}
+            - name: COMPETITION_API_URL
+              value: {{ .Values.global.competition.url }}
+            - name: COMPETITION_API_KEY_ID
+              value: {{ .Values.global.competition.apiUser }}
+            - name: COMPETITION_API_KEY_TOKEN
+              value: {{ .Values.global.competition.apiKey }}
+            - name: CRS_KEY_ID
+              value: {{ .Values.global.crs.apiUser }}
+            - name: CRS_KEY_TOKEN
+              value: {{ .Values.global.crs.apiKey }}
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: '{{ .Values.global.otel.endpoint }}'
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: '{{ .Values.global.otel.headers }}'
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: '{{ .Values.global.otel.protocol }}'
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: crs-fileshare
+              mountPath: /crs
+      volumes:
+        - name: crs-fileshare
+          persistentVolumeClaim:
+            claimName: {{ .Values.global.pvc.name }}
+      imagePullSecrets:
+        - name: {{ .Values.secret }}

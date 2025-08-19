@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE - VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Project specific
+build/
+out/
+logs/
+corpus/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temp files
+*.log
+*.tmp
+*.temp
+.*.swp
+*~
+
+# RabbitMQ
+*.mnesia
+tests/test_libpng_full.sh
+examples/
+.env
+9edb6649-ee47-47ce-8f05-2eafdbd3fc66/
+b112a8fe-b98e-44f9-b94b-305a3dba82a0/
+81dbd73c-adbf-4f22-a867-5d3948469638/
+2b8cb6fc-f3a8-4d15-aaf3-403238a456ea/
+3d4d*/
+# Task directories (UUID format)
+[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
+modules/*.bak
+.compose.env
+.vscode/settings.json
+.primefuzz.compose.env
+*.compose.env

@@ -1,0 +1,53 @@
+[project]
+name = "aixcc-patchagent"
+version = "1.0.0"
+description = "AIXCC Patch Agent"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "clang==16.0.1",
+    "colorama>=0.4.6",
+    "GitPython>=3.1.44",
+    "langchain-core==0.3.31",
+    "langchain-openai==0.3.2",
+    "langchain==0.3.15",
+    "openlit==1.33.11",
+    "opentelemetry-api>=1.31.0",
+    "pexpect>=4.9.0",
+    "pika>=1.3.2",
+    "psycopg2-binary>=2.9.10",
+    "pydantic_core==2.27.2",
+    "pydantic==2.10.6",
+    "SQLAlchemy>=2.0.39",
+    "tree-sitter-java>=0.23.5",
+    "tree-sitter>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.1.2",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.5",
+]
+
+[tool.setuptools]
+packages = ["aixcc", "patchagent", "patch_generator" ]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 179
+
+[tool.flake8]
+max-line-length = 179
+select = "F,E402"
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: slice
+version: 0.2.0
+description: crs-slice

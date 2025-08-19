@@ -1,0 +1,13 @@
+replicaCount:
+  r14: 1
+  r18: 1
+
+image:
+  r14:
+    repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-slice
+    tag: "gold"
+    pullPolicy: Always
+  r18:
+    repository: ghcr.io/aixcc-finals/afc-crs-42-b3yond-6ug/crs-slice-r18
+    tag: "gold"
+    pullPolicy: Always

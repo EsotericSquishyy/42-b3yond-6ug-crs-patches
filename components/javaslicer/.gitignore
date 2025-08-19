@@ -1,0 +1,25 @@
+target/**
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+*.iml
+.settings/
+.project
+.classpath
+
+# Gradle
+.gradle/
+build/
+
+# Maven
+*.log
+.mvn/
+output/slice_hikaricp_PropertyElfFuzzer.*.txt
