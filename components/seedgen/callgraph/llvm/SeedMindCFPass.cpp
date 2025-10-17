@@ -84,7 +84,8 @@ llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "SeedMindCFPass", LLVM_VERSION_STRING,
           [](PassBuilder &PB) {
             PB.registerOptimizerLastEPCallback(
-                [](ModulePassManager &MPM, OptimizationLevel Level) {
+                // [](ModulePassManager &MPM, OptimizationLevel Level) {
+                [](ModulePassManager &MPM, OptimizationLevel Level, ThinOrFullLTOPhase Phase) {
                   MPM.addPass(SeedMindCFPass());
                 });
           }};
