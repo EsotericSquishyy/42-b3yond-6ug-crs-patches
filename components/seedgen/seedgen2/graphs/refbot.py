@@ -68,8 +68,7 @@ class GenerationNode:
     """Handles the initial script generation."""
 
     def __call__(self, state: GenerateState):
-        logging.info(f"Starting reference script generation for prompt: {
-                     state['prompt'][:100]}...")
+        logging.info(f"Starting reference script generation for prompt: {state['prompt'][:100]}...")
         model = state['model']
         messages = [HumanMessage(content=state["prompt"])]
         response = model.invoke(messages)

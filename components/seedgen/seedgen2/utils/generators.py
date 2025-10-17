@@ -114,8 +114,7 @@ done
         if missing_files:
             return GeneratorRunResult(
                 False,
-                f"The generator exited normally, but some seed files are missing: {
-                    missing_files}",
+                f"The generator exited normally, but some seed files are missing: {missing_files}",
                 None
             )
         

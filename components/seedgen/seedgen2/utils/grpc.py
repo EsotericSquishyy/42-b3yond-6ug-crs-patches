@@ -49,9 +49,7 @@ def grpc_call(func):
                             "Requested resource not found") from rpc_error
                     else:
                         raise RuntimeError(
-                            f"gRPC call failed: {
-                                error.details()} (Code: {error.code().name})"
-                        ) from rpc_error
+                            f"gRPC call failed: {error.details()} (Code: {error.code().name})") from rpc_error
 
         # If we've exhausted our retries, raise the last error
         raise RuntimeError(

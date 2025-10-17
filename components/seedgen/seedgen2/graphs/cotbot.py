@@ -61,8 +61,7 @@ class GenerateStepNode:
         try:
             step_data = json.loads(response.content)
             next_action = step_data.get("next_action", "final_answer")
-            logging.info(f"STEP {step_count}. {step_data.get(
-                'title'):<20}: {step_data.get('content')}")
+            logging.info(f"STEP {step_count}. {step_data.get('title'):<20}: {step_data.get('content')}")
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON response: {e}")
             return {

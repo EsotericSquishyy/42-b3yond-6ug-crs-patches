@@ -47,8 +47,7 @@ def __get_seed_coverage(seedd: SeedD, harness_binary: str, seed_paths: list[str]
         seeds_path=seed_paths,
     )
     coverage_info = parse_coverage(run_seeds_result.coverage)
-    logging.info(f"Completed seed evaluation. Coverage results: {
-                 coverage_info}")
+    logging.info(f"Completed seed evaluation. Coverage results: {coverage_info}")
     partially_covered_functions = parse_partially_covered_functions(
         run_seeds_result.coverage)
     with open(os.path.join(seedd.shared_dir, run_seeds_result.report), "r") as f:

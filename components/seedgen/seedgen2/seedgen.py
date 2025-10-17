@@ -112,8 +112,7 @@ class SeedGenAgent:
 
     def run(self) -> None:
         """Run the seed generation process."""
-        logging.info(f"Running SeedGen2 agent for harness binary: {
-                     self.harness_binary}")
+        logging.info(f"Running SeedGen2 agent for harness binary: {self.harness_binary}")
 
         # Get functions and harness information
         functions = get_functions(self.seedd, self.harness_binary)

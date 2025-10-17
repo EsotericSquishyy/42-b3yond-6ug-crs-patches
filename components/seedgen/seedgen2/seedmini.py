@@ -43,8 +43,7 @@ class SeedMiniAgent:
 
     def run(self) -> None:
         """Run the seed generation process."""
-        logging.info(f"Running SeedGen2 Mini agent for harness binary: {
-                     self.harness_binary}")
+        logging.info(f"Running SeedGen2 Mini agent for harness binary: {self.harness_binary}")
 
         # Seed generation pipeline
 
