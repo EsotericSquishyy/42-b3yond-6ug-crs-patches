@@ -19,7 +19,9 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URL: redis://redis:6379
+      REDIS_SENTINEL_HOSTS: "dummy"
+      REDIS_MASTER: "dummy"
+      OVERRIDE_REDIS_URL: redis://redis:6379
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaegertracing:4317
       LOG_LEVEL: debug
       SCHEDULER_TASKS_PER_BATCH: 1
@@ -44,7 +46,9 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-      REDIS_URL: redis://redis:6379
+      REDIS_SENTINEL_HOSTS: "dummy"
+      REDIS_MASTER: "dummy"
+      OVERRIDE_REDIS_URL: redis://redis:6379
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaegertracing:4317
       LOG_LEVEL: debug
       SCHEDULER_TASKS_PER_BATCH: 1
@@ -91,3 +95,14 @@ services:
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
+  jaegertracing:
+    image: jaegertracing/all-in-one:1.53
+    container_name: jaegertracing
+    ports:
+      - "16686:16686"   # Jaeger web UI
+      - "4317:4317"     # OTLP gRPC receiver
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
