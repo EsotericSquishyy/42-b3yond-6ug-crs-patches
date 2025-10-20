@@ -13,6 +13,7 @@ import re
 
 from seedgen2.seedgen import SeedGenAgent
 from seedgen2.seedmini import SeedMiniAgent
+from seedgen2.seedmcp import SeedMcpAgent
 
 
 def parse_args():
@@ -52,6 +53,11 @@ def parse_args():
         "--mini",
         action="store_true",
         help="Run seedgen mini mode",
+    )
+    parser.add_argument(
+        "--mcp",
+        action="store_true",
+        help="Run seedgen in MCP mode",
     )
     return parser.parse_args()
 
@@ -447,7 +453,7 @@ def run_mini_mode(project_name, project_config, harness_binaries, src_path, root
             if harness_binary not in fuzzers:
                 continue
             fuzzer_dir = os.path.join(project_dir, harness_binary)
-            agent = SeedMiniAgent(fuzzer_dir, project_name, harness_binary, fuzzers[harness_binary])
+            agent = SeedMiniAgent(fuzzer_dir, project_name, harness_binary, fuzzers[harness_binary], "gpt-4.1")
             agent.run()
 
 
@@ -479,7 +485,7 @@ def run_full_mode(project_name, project_config, harness_binaries, src_path, root
             ip_addr = subprocess.check_output(
                 ["docker", "inspect", "-f", "{{.NetworkSettings.IPAddress}}", container_id]).decode().strip()
             agent = SeedGenAgent(fuzzer_dir, ip_addr,
-                                 project_name, harness_binary)
+                                 project_name, harness_binary, "gpt-4.1")
             agent.run()
     except (FileNotFoundError, ValueError) as e:
         print(f"[-] Error: {e}", file=sys.stderr)

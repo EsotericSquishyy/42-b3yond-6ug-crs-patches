@@ -45,6 +45,13 @@ impl LLVMPassManager {
                     vec![&pass_path],
                 ));
             }
+            // Patch
+            19..=u32::MAX => {
+                options.add_option(&CompilerOption::new_with_value(
+                    "-fpass-plugin",
+                    vec![&pass_path],
+                ));
+            }
             _ => {
                 panic!("Unsupported LLVM version");
             }
