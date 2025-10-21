@@ -463,7 +463,7 @@ def run_mcp_mode(
     project_config,
     src_path,
     fuzz_tooling,
-    gen_model="gpt-4.1",
+    gen_model="llama3.1",
     save_result_func=None,
     save_to_triage_func=None,
     task=None,

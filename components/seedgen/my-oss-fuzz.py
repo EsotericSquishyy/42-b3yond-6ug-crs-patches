@@ -453,7 +453,7 @@ def run_mini_mode(project_name, project_config, harness_binaries, src_path, root
             if harness_binary not in fuzzers:
                 continue
             fuzzer_dir = os.path.join(project_dir, harness_binary)
-            agent = SeedMiniAgent(fuzzer_dir, project_name, harness_binary, fuzzers[harness_binary], "gpt-4.1")
+            agent = SeedMiniAgent(fuzzer_dir, project_name, harness_binary, fuzzers[harness_binary], "llama3.1")
             agent.run()
 
 
@@ -485,7 +485,7 @@ def run_full_mode(project_name, project_config, harness_binaries, src_path, root
             ip_addr = subprocess.check_output(
                 ["docker", "inspect", "-f", "{{.NetworkSettings.IPAddress}}", container_id]).decode().strip()
             agent = SeedGenAgent(fuzzer_dir, ip_addr,
-                                 project_name, harness_binary, "gpt-4.1")
+                                 project_name, harness_binary, "llama3.1")
             agent.run()
     except (FileNotFoundError, ValueError) as e:
         print(f"[-] Error: {e}", file=sys.stderr)

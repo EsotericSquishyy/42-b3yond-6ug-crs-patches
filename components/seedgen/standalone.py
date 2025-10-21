@@ -67,10 +67,10 @@ def build_and_run_targets(project_name, src_path, fuzz_tooling, mini=False, mcp_
                      src_path, fuzz_tooling, task=mock_task)
     elif is_java or mini:
         run_mini_mode(project_name, project_config,
-                      src_path, fuzz_tooling, "gpt-4.1", task=mock_task)
+                      src_path, fuzz_tooling, "llama3.1", task=mock_task)
     else:
         run_full_mode(project_name, project_config,
-                      src_path, fuzz_tooling, "gpt-4.1", task=mock_task)
+                      src_path, fuzz_tooling, "llama3.1", task=mock_task)
 
 
 def main():
